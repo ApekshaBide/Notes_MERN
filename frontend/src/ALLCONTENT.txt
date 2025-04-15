@@ -1,0 +1,2 @@
+ primary:"#2BB5FF",
+    secondary:"#EF863E"
