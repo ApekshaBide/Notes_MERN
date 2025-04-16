@@ -8,6 +8,8 @@ import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
 import Toast from "../../components/ToastMessage/Toast";
 import EmptyCard from "../../components/EmptyCard/EmptyCard";
+import AddNoteImage from "../../assets/Images/images1.png"
+import NoDataImg from "../../assets/Images/no-data.png"
 
 const Home = () => {
   const [openAddEditModal, setOpenAddEditModal] = useState({
@@ -23,6 +25,9 @@ const Home = () => {
   })
   const [allNotes, setAllNotes] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
+  
+
+  const [isSearch,setIsSearch]= useState(false)
 
   const navigate = useNavigate();
 
@@ -97,6 +102,43 @@ const Home = () => {
       }
   }
 
+  // Search for a Note
+  const onSearchNote = async (query) => {
+    try{
+      const response = await axiosInstance.get("/search-notes",{
+        params:{query},
+      })
+      if(response.data && response.data.notes){
+        setIsSearch(true);
+        setAllNotes(response.data.notes);
+      }
+    }
+    catch(error){
+       console.log(error); 
+    }
+  }
+
+  const updateIsPinned = async (noteData) => {
+    const noteId = noteData._id
+    try{
+      const response = await axiosInstance.put("/update-note-pinned/" + noteId,{
+       "isPinned":!noteId.isPinned,
+      })
+      if(response.data && response.data.note){
+        showToastMessage("Note Updated Successfully")
+      getAllNotes()
+      }
+      }catch(error){
+      console.log(error)
+      
+      }
+  }
+
+  const handleClearSearch = () =>{
+    setIsSearch(false);
+    getAllNotes();
+  }
+
   useEffect(() => {
     getAllNotes();
     getUserInfo();
@@ -104,7 +146,7 @@ const Home = () => {
   }, []);
   return (
     <>
-      <Navbar userInfo={userInfo} />
+      <Navbar userInfo={userInfo} onSearchNote={onSearchNote} handleClearSearch={handleClearSearch} />
 
       <div className="container mx-auto">
         
@@ -120,12 +162,12 @@ const Home = () => {
                 isPinned={item.isPinned}
                 onEdit={() => handleEdit(item)}
                 onDelete={() => deleteNote(item)}
-                onPinNote={() => {}}
+                onPinNote={() => updateIsPinned(item)}
               />
             ))}
           </div>
         ) : (
-          <EmptyCard />
+          <EmptyCard imgSrc={isSearch ? NoDataImg : AddNoteImage} message={isSearch ? `Oops! No notes found matching your Search`:`Start creating your first note! Click the 'Add' button to jot down your thoughts,ideas and reminders. Let's get Started!`}/>
         )}
       </div>
       <button
